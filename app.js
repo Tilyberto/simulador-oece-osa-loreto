@@ -4,7 +4,8 @@ let examenActual = [];
 let respuestasUsuario = {};
 let indiceActual = 0;
 let timerInterval = null;
-let segundosTranscurridos = 0;
+let segundosRestantes = 0;
+let segundosTotalesExamen = 0;
 let sustentoAbierto = false;
 
 const LETRAS = ["A", "B", "C", "D", "E"];
@@ -40,7 +41,7 @@ function actualizarContadorHistorial() {
 }
 
 function reiniciarHistorial() {
-  if (confirm("¿Deseas reiniciar el lote completo para volver a incluir todas las 810 preguntas desde cero?")) {
+  if (confirm("¿Deseas reiniciar el historial para volver a incluir todas las 810 preguntas desde cero?")) {
     localStorage.removeItem(STORAGE_KEY);
     actualizarContadorHistorial();
   }
@@ -71,13 +72,18 @@ function seleccionarLoteNuevo(subPool, n) {
   const vistas = obtenerVistas();
   let noVistas = barajar(subPool.filter(p => !vistas.has(p.id)));
   if (noVistas.length === 0) {
-    // Si ya se completó todo ese subconjunto, reiniciar automáticamente el ciclo limpio
     noVistas = barajar(subPool);
   }
   return noVistas.slice(0, Math.min(n, noVistas.length));
 }
 
-function iniciarExamen(cantidad) {
+function formatearTiempo(segTotales) {
+  const min = String(Math.floor(segTotales / 60)).padStart(2, "0");
+  const seg = String(segTotales % 60).padStart(2, "0");
+  return `${min}:${seg}`;
+}
+
+function iniciarExamen(cantidad, minutosLimite) {
   const faseFiltro = document.getElementById("filtro-fase").value;
   let pool = BANCO_PREGUNTAS_OECE;
 
@@ -93,7 +99,6 @@ function iniciarExamen(cantidad) {
     examenActual = seleccionarLoteNuevo(pool, cantidad);
   }
 
-  // Lote limpio: ninguna pregunta pre-marcada y alternativas barajadas
   examenActual = examenActual.map(item => {
     const pares = item.opciones.map((texto, idx) => ({
       texto,
@@ -109,11 +114,15 @@ function iniciarExamen(cantidad) {
 
   respuestasUsuario = {};
   indiceActual = 0;
-  segundosTranscurridos = 0;
-  document.getElementById("hud-score").textContent = "0";
-  document.getElementById("hud-timer").textContent = "00:00";
+  segundosTotalesExamen = (minutosLimite || (cantidad === 20 ? 30 : 120)) * 60;
+  segundosRestantes = segundosTotalesExamen;
 
-  document.getElementById("hud-mode").textContent = cantidad === 20 ? "Examen Rápido (20)" : "Simulacro Oficial (72)";
+  document.getElementById("hud-score").textContent = "0";
+  const timerEl = document.getElementById("hud-timer");
+  timerEl.classList.remove("timer-warn");
+  timerEl.textContent = formatearTiempo(segundosRestantes);
+
+  document.getElementById("hud-mode").textContent = cantidad === 20 ? "Examen Rápido (30 min)" : "Simulacro Oficial (120 min)";
   document.getElementById("screen-home").classList.add("hidden");
   document.getElementById("screen-results").classList.add("hidden");
   document.getElementById("screen-quiz").classList.remove("hidden");
@@ -125,11 +134,21 @@ function iniciarExamen(cantidad) {
 
 function iniciarTimer() {
   clearInterval(timerInterval);
+  const timerEl = document.getElementById("hud-timer");
   timerInterval = setInterval(() => {
-    segundosTranscurridos++;
-    const min = String(Math.floor(segundosTranscurridos / 60)).padStart(2, "0");
-    const seg = String(segundosTranscurridos % 60).padStart(2, "0");
-    document.getElementById("hud-timer").textContent = `${min}:${seg}`;
+    segundosRestantes--;
+    if (segundosRestantes <= 300) {
+      timerEl.classList.add("timer-warn");
+    }
+    if (segundosRestantes <= 0) {
+      segundosRestantes = 0;
+      timerEl.textContent = "00:00";
+      clearInterval(timerInterval);
+      alert("⏰ Se agotó el tiempo establecido para el simulacro. Se mostrarán tus resultados.");
+      finalizarExamen();
+      return;
+    }
+    timerEl.textContent = formatearTiempo(segundosRestantes);
   }, 1000);
 }
 
@@ -302,10 +321,11 @@ function finalizarExamen() {
     }
   });
 
+  const usados = Math.max(0, segundosTotalesExamen - segundosRestantes);
   const pct = Math.round((aciertos / total) * 100);
   document.getElementById("final-percent").textContent = `${pct}%`;
   document.getElementById("final-fraction").textContent = `${aciertos} de ${total} correctas`;
-  document.getElementById("results-subtitle").textContent = `Tiempo empleado: ${document.getElementById("hud-timer").textContent}`;
+  document.getElementById("results-subtitle").textContent = `Tiempo utilizado: ${formatearTiempo(usados)} de ${formatearTiempo(segundosTotalesExamen)}`;
 
   const breakdown = document.getElementById("phase-breakdown");
   breakdown.innerHTML = "";
@@ -320,7 +340,7 @@ function finalizarExamen() {
 
 function revisarFalladas() {
   const cont = document.getElementById("review-list");
-  cont.innerHTML = "<h3 style='margin-bottom:12px; color:#243b53;'>Detalle de preguntas falladas o sin responder</h3>";
+  cont.innerHTML = "<h3 style='margin-bottom:12px; color:#16324a;'>Detalle de preguntas falladas o sin responder</h3>";
   let hayFalladas = false;
 
   examenActual.forEach((q, idx) => {
@@ -331,13 +351,13 @@ function revisarFalladas() {
       const correctaTxt = q.opcionesMezcladas[q.correctaMezclada];
       cont.innerHTML += `
         <div class="review-item">
-          <div style="font-size:0.78rem; font-weight:700; color:var(--primary); text-transform:uppercase;">${q.fase} • ${q.tema}</div>
+          <div style="font-size:0.78rem; font-weight:700; color:var(--sky-dark); text-transform:uppercase;">${q.fase} • ${q.tema}</div>
           <h4>${idx + 1}. ${q.pregunta}</h4>
-          <p style="color:var(--danger); font-size:0.9rem;"><strong>Tu respuesta:</strong> ${elegidaTxt}</p>
-          <p style="color:var(--success); font-size:0.9rem; margin-bottom:8px;"><strong>Respuesta correcta:</strong> ${correctaTxt}</p>
+          <p style="color:var(--danger); font-size:0.92rem;"><strong>Tu respuesta:</strong> ${elegidaTxt}</p>
+          <p style="color:var(--success); font-size:0.92rem; margin-bottom:8px;"><strong>Respuesta correcta:</strong> ${correctaTxt}</p>
           <details>
-            <summary style="cursor:pointer; color:var(--primary); font-weight:600; font-size:0.88rem;">📖 Ver sustento legal (${q.articulo_ref})</summary>
-            <div style="margin-top:8px; padding:12px; background:#f8fafc; border-radius:8px; font-size:0.86rem; white-space:pre-wrap; line-height:1.65;">${q.sustento_legal}</div>
+            <summary style="cursor:pointer; color:var(--sky-dark); font-weight:600; font-size:0.9rem;">📖 Ver sustento legal (${q.articulo_ref})</summary>
+            <div style="margin-top:8px; padding:12px; background:#f8fbfd; border:1px solid #d4e6f1; border-radius:8px; font-size:0.88rem; white-space:pre-wrap; line-height:1.65;">${q.sustento_legal}</div>
           </details>
         </div>
       `;

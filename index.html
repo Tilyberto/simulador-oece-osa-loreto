@@ -10,7 +10,6 @@
   <header class="topbar">
     <div class="container topbar-inner">
       <div class="brand">
-        <span class="badge-osa">OSA LORETO</span>
         <div>
           <h1>OSA Loreto — Simulador Examen Certificación OECE</h1>
           <p class="subtitle">Ley General de Contrataciones Públicas (Ley N° 32069), Reglamento y Balotario Oficial Vigente</p>
@@ -23,27 +22,27 @@
     <section id="screen-home" class="card home-card">
       <div class="home-header">
         <h2>Selecciona tu modalidad de entrenamiento</h2>
-        <p>Banco depurado de <strong id="total-bank-count">0</strong> preguntas únicas clasificadas por fase y vinculadas a su base normativa.</p>
+        <p>Banco de <strong id="total-bank-count">0</strong> preguntas únicas clasificadas por fase y vinculadas a su base normativa.</p>
       </div>
 
       <div class="stats-grid">
-        <div class="stat-box">
+        <div class="stat-box box-sky">
           <span class="stat-num" id="count-prep">0</span>
           <span class="stat-label">Actuaciones Preparatorias</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box box-mint">
           <span class="stat-num" id="count-sel">0</span>
           <span class="stat-label">Selección</span>
         </div>
-        <div class="stat-box">
+        <div class="stat-box box-sky">
           <span class="stat-num" id="count-ejec">0</span>
           <span class="stat-label">Ejecución Contractual</span>
         </div>
       </div>
 
       <div class="history-bar">
-        <span>Lote de avance sin repetir: <strong id="seen-count">0</strong> de <strong id="seen-total">0</strong> preguntas respondidas (Quedan <strong id="remaining-count">0</strong> nuevas)</span>
-        <button class="btn btn-ghost btn-sm" onclick="reiniciarHistorial()">↺ Reiniciar lote completo</button>
+        <span>Avance sin repetir: <strong id="seen-count">0</strong> de <strong id="seen-total">0</strong> preguntas respondidas (Quedan <strong id="remaining-count">0</strong> pendientes)</span>
+        <button class="btn btn-ghost btn-sm" onclick="reiniciarHistorial()">↺ Reiniciar historial</button>
       </div>
 
       <div class="filter-bar">
@@ -57,20 +56,24 @@
       </div>
 
       <div class="modes-grid">
-        <div class="mode-card" onclick="iniciarExamen(20)">
-          <div class="mode-badge">PRÁCTICA ÁGIL</div>
-          <h3>Examen Rápido</h3>
-          <div class="mode-qty">20 Preguntas</div>
-          <p>Nuevo lote virgen sin preguntas ya respondidas en simulacros anteriores.</p>
-          <button class="btn btn-primary">Iniciar Examen Rápido</button>
+        <div class="mode-card card-sky" onclick="iniciarExamen(20, 30)">
+          <div>
+            <div class="mode-badge badge-sky">PRÁCTICA ÁGIL • 30 MIN</div>
+            <h3>Examen Rápido</h3>
+            <div class="mode-qty">20 Preguntas</div>
+            <p>Entrenamiento rápido con temporizador de <strong>30 minutos</strong> y preguntas aleatorias sin repetir las ya resueltas.</p>
+          </div>
+          <button class="btn btn-sky">Iniciar Examen Rápido</button>
         </div>
 
-        <div class="mode-card featured" onclick="iniciarExamen(72)">
-          <div class="mode-badge official">SIMULACRO OFICIAL</div>
-          <h3>Examen Completo OECE</h3>
-          <div class="mode-qty">72 Preguntas</div>
-          <p>Simulación completa con cronómetro y distribución proporcional al examen de certificación.</p>
-          <button class="btn btn-accent">Iniciar Simulacro de 72 Preguntas</button>
+        <div class="mode-card card-mint" onclick="iniciarExamen(72, 120)">
+          <div>
+            <div class="mode-badge badge-mint">SIMULACRO OFICIAL • 120 MIN</div>
+            <h3>Examen Completo OECE</h3>
+            <div class="mode-qty">72 Preguntas</div>
+            <p>Simulación completa con temporizador de <strong>120 minutos</strong> y distribución proporcional al examen de certificación.</p>
+          </div>
+          <button class="btn btn-mint">Iniciar Simulacro de 72 Preguntas</button>
         </div>
       </div>
     </section>
@@ -88,7 +91,7 @@
         </div>
         <div class="hud-right">
           <span class="score-pill">Aciertos: <strong id="hud-score">0</strong></span>
-          <span id="hud-timer" class="timer-pill">00:00</span>
+          <span id="hud-timer" class="timer-pill" title="Tiempo restante">30:00</span>
           <button class="btn btn-ghost btn-sm" onclick="confirmarSalir()">Salir</button>
         </div>
       </div>
@@ -115,8 +118,8 @@
 
         <div class="nav-footer">
           <button id="btn-prev" class="btn btn-secondary" onclick="anteriorPregunta()">← Anterior</button>
-          <button id="btn-next" class="btn btn-primary" onclick="siguientePregunta()">Siguiente →</button>
-          <button id="btn-finish" class="btn btn-accent hidden" onclick="finalizarExamen()">Finalizar y Ver Resultados</button>
+          <button id="btn-next" class="btn btn-sky" onclick="siguientePregunta()">Siguiente →</button>
+          <button id="btn-finish" class="btn btn-mint hidden" onclick="finalizarExamen()">Finalizar y Ver Resultados</button>
         </div>
       </div>
 
@@ -141,7 +144,7 @@
       </div>
 
       <div class="results-actions">
-        <button class="btn btn-primary" onclick="volverInicio()">Volver al Inicio</button>
+        <button class="btn btn-sky" onclick="volverInicio()">Volver al Inicio</button>
         <button class="btn btn-secondary" onclick="revisarFalladas()">Repasar Preguntas Falladas</button>
       </div>
 

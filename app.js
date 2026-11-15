@@ -1,3 +1,5 @@
+const STORAGE_KEY = "osa_loreto_oece_vistas_v2";
+
 let examenActual = [];
 let respuestasUsuario = {};
 let indiceActual = 0;
@@ -6,6 +8,43 @@ let segundosTranscurridos = 0;
 let sustentoAbierto = false;
 
 const LETRAS = ["A", "B", "C", "D", "E"];
+
+function obtenerVistas() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function guardarVista(idPregunta) {
+  try {
+    const vistas = obtenerVistas();
+    vistas.add(idPregunta);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...vistas]));
+    actualizarContadorHistorial();
+  } catch (e) {}
+}
+
+function actualizarContadorHistorial() {
+  const vistas = obtenerVistas();
+  const total = BANCO_PREGUNTAS_OECE.length;
+  const vistasReales = Math.min(vistas.size, total);
+  const elSeen = document.getElementById("seen-count");
+  const elTot = document.getElementById("seen-total");
+  const elRem = document.getElementById("remaining-count");
+  if (elSeen) elSeen.textContent = vistasReales;
+  if (elTot) elTot.textContent = total;
+  if (elRem) elRem.textContent = Math.max(0, total - vistasReales);
+}
+
+function reiniciarHistorial() {
+  if (confirm("¿Deseas reiniciar el lote completo para volver a incluir todas las 810 preguntas desde cero?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    actualizarContadorHistorial();
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof BANCO_PREGUNTAS_OECE === "undefined") {
@@ -16,6 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("count-prep").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Actuaciones Preparatorias").length;
   document.getElementById("count-sel").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Selección").length;
   document.getElementById("count-ejec").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Ejecución Contractual").length;
+  actualizarContadorHistorial();
 });
 
 function barajar(array) {
@@ -27,24 +67,33 @@ function barajar(array) {
   return copia;
 }
 
+function seleccionarLoteNuevo(subPool, n) {
+  const vistas = obtenerVistas();
+  let noVistas = barajar(subPool.filter(p => !vistas.has(p.id)));
+  if (noVistas.length === 0) {
+    // Si ya se completó todo ese subconjunto, reiniciar automáticamente el ciclo limpio
+    noVistas = barajar(subPool);
+  }
+  return noVistas.slice(0, Math.min(n, noVistas.length));
+}
+
 function iniciarExamen(cantidad) {
   const faseFiltro = document.getElementById("filtro-fase").value;
   let pool = BANCO_PREGUNTAS_OECE;
 
   if (faseFiltro !== "TODAS") {
     pool = pool.filter(p => p.fase === faseFiltro);
-    examenActual = barajar(pool).slice(0, Math.min(cantidad, pool.length));
+    examenActual = seleccionarLoteNuevo(pool, cantidad);
   } else if (cantidad === 72) {
-    // Distribución oficial OECE aproximada (25 Prep, 22 Sel, 25 Ejec)
-    const p1 = barajar(pool.filter(p => p.fase === "Actuaciones Preparatorias")).slice(0, 25);
-    const p2 = barajar(pool.filter(p => p.fase === "Selección")).slice(0, 22);
-    const p3 = barajar(pool.filter(p => p.fase === "Ejecución Contractual")).slice(0, 25);
+    const p1 = seleccionarLoteNuevo(pool.filter(p => p.fase === "Actuaciones Preparatorias"), 25);
+    const p2 = seleccionarLoteNuevo(pool.filter(p => p.fase === "Selección"), 22);
+    const p3 = seleccionarLoteNuevo(pool.filter(p => p.fase === "Ejecución Contractual"), 25);
     examenActual = barajar([...p1, ...p2, ...p3]);
   } else {
-    examenActual = barajar(pool).slice(0, cantidad);
+    examenActual = seleccionarLoteNuevo(pool, cantidad);
   }
 
-  // Barajar opciones de cada pregunta manteniendo rastreada la correcta
+  // Lote limpio: ninguna pregunta pre-marcada y alternativas barajadas
   examenActual = examenActual.map(item => {
     const pares = item.opciones.map((texto, idx) => ({
       texto,
@@ -61,6 +110,8 @@ function iniciarExamen(cantidad) {
   respuestasUsuario = {};
   indiceActual = 0;
   segundosTranscurridos = 0;
+  document.getElementById("hud-score").textContent = "0";
+  document.getElementById("hud-timer").textContent = "00:00";
 
   document.getElementById("hud-mode").textContent = cantidad === 20 ? "Examen Rápido (20)" : "Simulacro Oficial (72)";
   document.getElementById("screen-home").classList.add("hidden");
@@ -113,7 +164,6 @@ function mostrarPregunta() {
     contOpciones.appendChild(btn);
   });
 
-  // Panel de feedback bajo demanda
   const fbControls = document.getElementById("feedback-controls");
   const sustentoPanel = document.getElementById("sustento-panel");
   sustentoPanel.classList.add("hidden");
@@ -130,7 +180,6 @@ function mostrarPregunta() {
       banner.className = "result-banner err";
     }
 
-    // Cargar datos del sustento (ocultos hasta que el usuario dé clic)
     document.getElementById("sustento-fase").textContent = q.fase;
     document.getElementById("sustento-tema").textContent = q.tema;
     document.getElementById("sustento-art-ref").textContent = q.articulo_ref || "Ley N° 32069 y Reglamento";
@@ -150,8 +199,8 @@ function mostrarPregunta() {
 function seleccionarOpcion(idx) {
   if (respuestasUsuario[indiceActual] !== undefined) return;
   respuestasUsuario[indiceActual] = idx;
+  guardarVista(examenActual[indiceActual].id);
 
-  // Actualizar puntaje
   let aciertos = 0;
   examenActual.forEach((q, i) => {
     if (respuestasUsuario[i] === q.correctaMezclada) aciertos++;
@@ -223,9 +272,12 @@ function confirmarSalir() {
 
 function volverInicio() {
   clearInterval(timerInterval);
+  examenActual = [];
+  respuestasUsuario = {};
   document.getElementById("screen-quiz").classList.add("hidden");
   document.getElementById("screen-results").classList.add("hidden");
   document.getElementById("screen-home").classList.remove("hidden");
+  actualizarContadorHistorial();
 }
 
 function finalizarExamen() {
@@ -268,7 +320,7 @@ function finalizarExamen() {
 
 function revisarFalladas() {
   const cont = document.getElementById("review-list");
-  cont.innerHTML = "<h3 style='margin-bottom:12px; color:var(--primary);'>Detalle de preguntas falladas o sin responder</h3>";
+  cont.innerHTML = "<h3 style='margin-bottom:12px; color:#243b53;'>Detalle de preguntas falladas o sin responder</h3>";
   let hayFalladas = false;
 
   examenActual.forEach((q, idx) => {
@@ -284,8 +336,8 @@ function revisarFalladas() {
           <p style="color:var(--danger); font-size:0.9rem;"><strong>Tu respuesta:</strong> ${elegidaTxt}</p>
           <p style="color:var(--success); font-size:0.9rem; margin-bottom:8px;"><strong>Respuesta correcta:</strong> ${correctaTxt}</p>
           <details>
-            <summary style="cursor:pointer; color:#1d4ed8; font-weight:600; font-size:0.88rem;">📖 Ver sustento legal (${q.articulo_ref})</summary>
-            <div style="margin-top:8px; padding:10px; background:#f8fafc; border-radius:8px; font-size:0.85rem; white-space:pre-line;">${q.sustento_legal}</div>
+            <summary style="cursor:pointer; color:var(--primary); font-weight:600; font-size:0.88rem;">📖 Ver sustento legal (${q.articulo_ref})</summary>
+            <div style="margin-top:8px; padding:12px; background:#f8fafc; border-radius:8px; font-size:0.86rem; white-space:pre-wrap; line-height:1.65;">${q.sustento_legal}</div>
           </details>
         </div>
       `;

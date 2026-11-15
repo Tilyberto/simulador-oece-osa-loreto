@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OSA Loreto — Simulador Examen Certificación OECE</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand">
+        <span class="badge-osa">OSA LORETO</span>
+        <div>
+          <h1>OSA Loreto — Simulador Examen Certificación OECE</h1>
+          <p class="subtitle">Basado en la Ley General de Contrataciones Públicas (Ley N° 32069), su Reglamento y Balotario Oficial Vigente</p>
+        </div>
+      </div>
+      <div class="author-tag">Creado por <strong>Ricardo D. Vásquez T.</strong></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- PANTALLA DE INICIO -->
+    <section id="screen-home" class="card home-card">
+      <div class="home-header">
+        <h2>Selecciona tu modalidad de entrenamiento</h2>
+        <p>Banco depurado de <strong id="total-bank-count">0</strong> preguntas únicas sin duplicados, clasificadas por fase y vinculadas a su base normativa exacta.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <span class="stat-num" id="count-prep">0</span>
+          <span class="stat-label">Actuaciones Preparatorias</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" id="count-sel">0</span>
+          <span class="stat-label">Selección</span>
+        </div>
+        <div class="stat-box">
+          <span class="stat-num" id="count-ejec">0</span>
+          <span class="stat-label">Ejecución Contractual</span>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <label for="filtro-fase">Filtrar preguntas por fase (opcional):</label>
+        <select id="filtro-fase">
+          <option value="TODAS">Todas las fases (Distribución oficial OECE)</option>
+          <option value="Actuaciones Preparatorias">Solo Fase 1: Actuaciones Preparatorias</option>
+          <option value="Selección">Solo Fase 2: Selección</option>
+          <option value="Ejecución Contractual">Solo Fase 3: Ejecución Contractual</option>
+        </select>
+      </div>
+
+      <div class="modes-grid">
+        <div class="mode-card" onclick="iniciarExamen(20)">
+          <div class="mode-badge">PRÁCTICA ÁGIL</div>
+          <h3>Examen Rápido</h3>
+          <div class="mode-qty">20 Preguntas</div>
+          <p>Ideal para repasos diarios rápidos con retroalimentación normativa bajo demanda.</p>
+          <button class="btn btn-primary">Iniciar Examen Rápido</button>
+        </div>
+
+        <div class="mode-card featured" onclick="iniciarExamen(72)">
+          <div class="mode-badge official">SIMULACRO OFICIAL</div>
+          <h3>Examen Completo OECE</h3>
+          <div class="mode-qty">72 Preguntas</div>
+          <p>Simulación completa con cronómetro (120 min) y estructura proporcional al examen de certificación.</p>
+          <button class="btn btn-accent">Iniciar Simulacro de 72 Preguntas</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA DE EXAMEN -->
+    <section id="screen-quiz" class="hidden">
+      <div class="quiz-hud card">
+        <div class="hud-left">
+          <span id="hud-mode" class="pill">Examen Rápido</span>
+          <span id="hud-progress" class="hud-text">Pregunta 1 de 20</span>
+        </div>
+        <div class="hud-center">
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
+          </div>
+        </div>
+        <div class="hud-right">
+          <span class="score-pill">Aciertos: <strong id="hud-score">0</strong></span>
+          <span id="hud-timer" class="timer-pill">00:00</span>
+          <button class="btn btn-ghost btn-sm" onclick="confirmarSalir()">Salir</button>
+        </div>
+      </div>
+
+      <div class="card question-card">
+        <div id="question-text" class="question-text"></div>
+        <div id="options-container" class="options-list"></div>
+
+        <!-- BOTÓN DE FEEDBACK BAJO DEMANDA (No tapa las opciones) -->
+        <div id="feedback-controls" class="feedback-controls hidden">
+          <div id="result-banner" class="result-banner"></div>
+          <button id="btn-toggle-sustento" class="btn btn-sustento" onclick="toggleSustento()">
+            📖 Ver sustento legal / repaso
+          </button>
+        </div>
+
+        <!-- PANEL DESPLEGABLE DE SUSTENTO LEGAL -->
+        <div id="sustento-panel" class="sustento-panel hidden">
+          <div class="sustento-header">
+            <div class="sustento-fase" id="sustento-fase">FASE</div>
+            <div class="sustento-tema" id="sustento-tema">Tema del Balotario</div>
+            <div class="sustento-art-badge" id="sustento-art-ref">Base Normativa</div>
+          </div>
+          <div class="sustento-body" id="sustento-texto"></div>
+        </div>
+
+        <div class="nav-footer">
+          <button id="btn-prev" class="btn btn-secondary" onclick="anteriorPregunta()">← Anterior</button>
+          <button id="btn-next" class="btn btn-primary" onclick="siguientePregunta()">Siguiente →</button>
+          <button id="btn-finish" class="btn btn-accent hidden" onclick="finalizarExamen()">Finalizar y Ver Resultados</button>
+        </div>
+      </div>
+
+      <!-- MAPA DE NAVEGACIÓN DE PREGUNTAS -->
+      <div class="card navigator-card">
+        <div class="nav-title">Navegador de preguntas</div>
+        <div id="question-dots" class="dots-grid"></div>
+      </div>
+    </section>
+
+    <!-- PANTALLA DE RESULTADOS -->
+    <section id="screen-results" class="card results-card hidden">
+      <div class="results-header">
+        <h2>Resultados del Simulacro OECE</h2>
+        <p id="results-subtitle"></p>
+      </div>
+
+      <div class="score-summary">
+        <div class="big-score">
+          <span id="final-percent">0%</span>
+          <small id="final-fraction">0 / 0 correctas</small>
+        </div>
+        <div class="phase-breakdown" id="phase-breakdown"></div>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn btn-primary" onclick="volverInicio()">Volver al Inicio</button>
+        <button class="btn btn-secondary" onclick="revisarFalladas()">Repasar Preguntas Falladas</button>
+      </div>
+
+      <div id="review-list" class="review-list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <strong>OSA Loreto</strong> — Simulador Examen Certificación OECE • <span>Creado por Ricardo D. Vásquez T.</span>
+    </div>
+  </footer>
+
+  <script src="preguntas.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

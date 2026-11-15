@@ -24,27 +24,7 @@ function guardarVista(idPregunta) {
     const vistas = obtenerVistas();
     vistas.add(idPregunta);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...vistas]));
-    actualizarContadorHistorial();
   } catch (e) {}
-}
-
-function actualizarContadorHistorial() {
-  const vistas = obtenerVistas();
-  const total = BANCO_PREGUNTAS_OECE.length;
-  const vistasReales = Math.min(vistas.size, total);
-  const elSeen = document.getElementById("seen-count");
-  const elTot = document.getElementById("seen-total");
-  const elRem = document.getElementById("remaining-count");
-  if (elSeen) elSeen.textContent = vistasReales;
-  if (elTot) elTot.textContent = total;
-  if (elRem) elRem.textContent = Math.max(0, total - vistasReales);
-}
-
-function reiniciarHistorial() {
-  if (confirm("¿Deseas reiniciar el historial para volver a incluir todas las 810 preguntas desde cero?")) {
-    localStorage.removeItem(STORAGE_KEY);
-    actualizarContadorHistorial();
-  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -56,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("count-prep").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Actuaciones Preparatorias").length;
   document.getElementById("count-sel").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Selección").length;
   document.getElementById("count-ejec").textContent = BANCO_PREGUNTAS_OECE.filter(p => p.fase === "Ejecución Contractual").length;
-  actualizarContadorHistorial();
 });
 
 function barajar(array) {
@@ -297,7 +276,6 @@ function volverInicio() {
   document.getElementById("screen-quiz").classList.add("hidden");
   document.getElementById("screen-results").classList.add("hidden");
   document.getElementById("screen-home").classList.remove("hidden");
-  actualizarContadorHistorial();
 }
 
 function finalizarExamen() {

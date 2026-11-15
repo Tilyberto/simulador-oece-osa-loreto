@@ -32,7 +32,6 @@ body {
 .container { width: 100%; max-width: 940px; margin: 0 auto; padding: 0 18px; }
 .hidden { display: none !important; }
 
-/* TOPBAR CON TOQUE CELESTE/VERDE SUAVE */
 .topbar {
   background: linear-gradient(90deg, #eaf5fb 0%, #eaf7f2 100%);
   padding: 20px 0;
@@ -57,12 +56,11 @@ main { flex: 1; padding: 26px 0 40px; }
 .home-header h2 { color: #16324a; font-size: 1.42rem; margin-bottom: 6px; }
 .home-header p { color: var(--muted); font-size: 0.96rem; }
 
-/* TARJETAS DE FASES CON MARCOS PASTEL */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 .stat-box {
   border-radius: 11px;
@@ -84,21 +82,6 @@ main { flex: 1; padding: 26px 0 40px; }
 .stat-num { display: block; font-size: 1.55rem; font-weight: 800; }
 .stat-label { font-size: 0.85rem; color: #2d3e50; font-weight: 600; }
 
-.history-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f5fafc;
-  border: 1.5px solid #c6dfec;
-  border-radius: 10px;
-  padding: 11px 16px;
-  margin-bottom: 18px;
-  font-size: 0.9rem;
-  color: #2c3e50;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
 .filter-bar {
   display: flex;
   align-items: center;
@@ -117,7 +100,6 @@ main { flex: 1; padding: 26px 0 40px; }
   background: #fff;
 }
 
-/* TARJETAS DE MODALIDAD CON MARCOS CELESTE PASTEL Y VERDE PASTEL */
 .modes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -167,7 +149,6 @@ main { flex: 1; padding: 26px 0 40px; }
 .mode-qty { font-size: 1.6rem; font-weight: 800; color: var(--text); margin: 6px 0 10px; }
 .mode-card p { font-size: 0.9rem; color: #3d4f60; margin-bottom: 18px; }
 
-/* BOTONES */
 .btn {
   border: none;
   border-radius: 8px;
@@ -187,7 +168,6 @@ main { flex: 1; padding: 26px 0 40px; }
 .btn-ghost:hover { background: #eef6fa; }
 .btn-sm { padding: 6px 12px; font-size: 0.84rem; }
 
-/* HUD */
 .quiz-hud {
   display: flex;
   align-items: center;
@@ -208,7 +188,6 @@ main { flex: 1; padding: 26px 0 40px; }
 .timer-pill { background: #ffffff; border: 1.5px solid #9ecce6; padding: 4px 11px; border-radius: 8px; font-family: monospace; font-size: 0.96rem; font-weight: 700; color: var(--sky-dark); }
 .timer-pill.timer-warn { background: #fef3c7; border-color: #f59e0b; color: #b45309; }
 
-/* PREGUNTA Y OPCIONES CON BUEN CONTRASTE */
 .question-text {
   font-size: 1.08rem;
   font-weight: 600;

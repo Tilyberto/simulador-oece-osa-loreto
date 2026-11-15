@@ -72,6 +72,7 @@ function seleccionarLoteNuevo(subPool, n) {
   const vistas = obtenerVistas();
   let noVistas = barajar(subPool.filter(p => !vistas.has(p.id)));
   if (noVistas.length === 0) {
+    localStorage.removeItem(STORAGE_KEY);
     noVistas = barajar(subPool);
   }
   return noVistas.slice(0, Math.min(n, noVistas.length));
